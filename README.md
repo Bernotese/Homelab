@@ -3,7 +3,11 @@
 ## Contents
 
 1. [Docker Installtion](#Docker-Installation)
-2. [Docker-Compose-File anpassen](#anpassungen-in-der-compose-file-vornehmen)
+2. [Auflistung der Services & Doku](#Auflistung-der-Services-&-Doku)
+3. [Docker-Compose-File anpassen](#anpassungen-in-der-compose-file-vornehmen)
+4. [Docker Compose auf Host ausführen](#Docker-Compose-auf-Host-ausführen)
+5. [DNS Information](#DNS-Information)
+6. [Passwörter](#Passwörter)
 <br>
 <br>
 ---
