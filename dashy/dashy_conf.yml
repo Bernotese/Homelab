@@ -1,0 +1,56 @@
+#Dashy - Dashboard Manager Beispiel Konfiguration
+pageInfo:
+  title: Dashy
+  description: Homelab - Dashboard
+  navLinks:
+    - title: Documentation
+      path: https://dashy.to/docs
+      target: newtab
+
+appConfig:
+  theme: dashy-docs
+  layout: auto
+  iconSize: medium
+  language: de
+
+sections:
+  - name: Beispiel Section 1 #Die erste Kachel erstellen
+    icon: https://cdn-icons-png.flaticon.com/512/5680/5680759.png
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      #Als Beispiel den ersten Service
+      - title: Portainer # Legt den Namen fest
+        description: Docker Management #Legt die Beschreibung fest
+        icon: https://avatars.githubusercontent.com/u/22225832?s=280&v=4 #Portainer Logo
+        url: https://portainer.zuhause/#!/ # URL zur Anwendung
+        target: newtab # Wie soll die App geöffnet werden
+        id: 0_404_portainer
+      #Zweite App in der Kachel
+      - title: Node-Red
+        description: Low Code Platform 
+        icon: https://nodered.org/about/resources/media/node-red-hexagon.png
+        url: https://nodered.zuhause/ # URL zur Anwendung
+        target: newtab
+        id: 1_404_nodered
+  #Zweite Kachel
+  - name: Network 
+    icon: https://cdn-icons-png.flaticon.com/512/153/153157.png
+    displayData:
+      sortBy: default
+      rows: 1
+      cols: 1
+      collapsed: false
+      hideForGuests: false
+    items:
+      - title: PiHole
+        description: DNS Adblocker
+        icon: https://upload.wikimedia.org/wikipedia/commons/0/00/Pi-hole_Logo.png
+        url: https://pihole.zuhause
+        target: newtab
+        id: 0_746_pihole
+     

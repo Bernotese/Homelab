@@ -1,0 +1,176 @@
+version: '3'
+
+#Volumes für die jeweiligen Apps erstellen
+volumes:
+  traefik-ssl-certs:
+    driver: local
+  node-red_data:
+  dbdata:
+  uptime-kuma_data:
+  nextcloud_data:
+  dashy_data:
+  portainer_data:
+  gitlab_data:
+  bookstack_data:
+
+#Netzwerke für die jeweiligen Apps erstellen
+networks:
+  traefik_web:
+
+services:
+  traefik:
+    image: "traefik:v2.5"
+    container_name: "traefik"
+    command: "--log.level=DEBUG"
+    networks:
+      - traefik_web
+    ports:
+      - "80:80"
+      - "443:443"
+      # (Optional) Expose Dashboard
+      - "8080:8080"  # Don't do this in production!
+    volumes:
+    #/etc/traefik auf dockerhost anlegen
+      - /etc/traefik:/etc/traefik #/etc/traefik vorher anlegen
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-ssl-certs:/ssl-certs
+  
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    networks:
+      - traefik_web
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - portainer_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.entrypoints=web, websecure"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=production" #Bei Test- und Probedurchläufen production durch staging ersetzen. Bei jedem Service!
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000" #Application port if more then 2 ports on the app
+  
+  dashy:
+    image: lissy93/dashy
+    container_name: dashy
+    volumes:
+      - ./dashy/dashy_conf.yml:/app/public/conf.yml
+    networks:
+      - traefik_web
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashy.entrypoints=web, websecure"
+      - "traefik.http.routers.dashy.rule=Host(`dashy.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.dashy.tls=true"
+      - "traefik.http.routers.dashy.tls.certresolver=production"
+  
+  db:
+    image: mysql
+    container_name: db #Wenn container Name geändert wird auch bei phpmyadmin ändern
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: mySecretPaswd #MySQL Root Passwort
+    volumes:
+      - dbdata:/var/lib/mysql:rw
+    ports:
+      - 3306:3306
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    links:
+      - "db" #Hier den Conatiner namen des DB Containers ändern
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 8081:80
+  
+  node-red:
+    image: nodered/node-red:latest
+    container_name: nodered
+    networks:
+      - traefik_web
+    environment:
+      - TZ=Europe/Berlin
+    volumes:
+      - node-red_data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nodered.entrypoints=web, websecure"
+      - "traefik.http.routers.nodered.rule=Host(`nodered.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.nodered.tls=true"
+      - "traefik.http.routers.nodered.tls.certresolver=production"
+  
+  uptime-kuma:
+    image: louislam/uptime-kuma
+    container_name: kuma
+    restart: always
+    networks:
+      - traefik_web
+    volumes:
+      - uptime-kuma_data:/app/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kuma.entrypoints=web, websecure"
+      - "traefik.http.routers.kuma.rule=Host(`kuma.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.kuma.tls=true"
+      - "traefik.http.routers.kuma.tls.certresolver=production"
+      - "traefik.http.services.kuma.loadBalancer.server.port=3001"
+  
+  nextcloud:
+    container_name: Nextcloud
+    image: nextcloud
+    restart: always
+    networks:
+      - traefik_web
+    volumes:
+      - nextcloud_data:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nextcloud.entrypoints=web, websecure"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.nextcloud.tls=true"
+      - "traefik.http.routers.nextcloud.tls.certresolver=production"
+  
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    networks:
+      - traefik_web
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.entrypoints=web, websecure"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.zuhause`)" #DNS Namen für App festlegen
+      - "traefik.htpp.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=production"
+  
+  photoprism:
+    container_name: PhotoPrism
+    image: photoprism/photoprism
+    networks:
+      - traefik_web
+    restart: always
+    security_opt:
+      - "seccomp=unconfined"
+      - "apparmor=unconfined"
+    volumes:
+      - /etc/photoprism/pictures:/photoprism/originals #/etc/photoprism/pictures vorher anlegen
+    environment:
+      - PHOTOPRISM_UPLOAD_NSFW=true
+      - PHOTOPRISM_ADMIN_PASSWORD=mySecretPaswd #Adminlogin Passwort
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prism.entrypoints=web, websecure"
+      - "traefik.http.routers.prism.rule=Host(`prism.zuhause`)" #DNS Namen festlegen 
+      - "traefik.htpp.routers.prism.tls=true"
+      - "traefik.http.routers.prism.tls.certresolver=production"
